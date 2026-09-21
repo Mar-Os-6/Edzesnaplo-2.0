@@ -33,7 +33,7 @@ body {
     width: 100%;
     max-width: 480px;
     min-height: 100vh;
-    padding: 16px 16px 130px 16px;
+    padding: 16px 16px 90px 16px;
     position: relative;
 }
 
@@ -58,6 +58,12 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .date-badge-input {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
@@ -68,6 +74,35 @@ body {
     font-weight: 600;
     outline: none;
     backdrop-filter: blur(10px);
+}
+
+/* IDŐZÍTŐ IKON GOMB */
+.timer-icon-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--accent-green);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+}
+
+.timer-icon-btn.active-running {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 12px var(--accent-green-glow);
+    animation: pulse-glow 1.5s infinite;
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 4px var(--accent-green-glow); }
+    50% { box-shadow: 0 0 14px var(--accent-green); }
+    100% { box-shadow: 0 0 4px var(--accent-green-glow); }
 }
 
 /* GLASSMORPHISM KÁRTYÁK */
@@ -111,6 +146,10 @@ body {
     display: flex;
     gap: 8px;
     margin-bottom: 10px;
+}
+
+.body-date-input {
+    max-width: 50%;
 }
 
 .input-label {
@@ -439,57 +478,78 @@ select.form-control {
     padding-left: 8px;
 }
 
-/* LEBEGŐ PIHENŐIDŐZÍTŐ BAR */
-.floating-timer {
-    position: fixed;
-    bottom: 72px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 32px);
-    max-width: 448px;
-    background: rgba(15, 20, 30, 0.92);
-    border: 1px solid var(--accent-green);
-    backdrop-filter: blur(16px);
-    border-radius: 40px;
-    padding: 8px 16px;
+/* IDŐZÍTŐ & STOPPER MODÁL ELEMEK */
+.timer-tab-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 15px var(--accent-green-glow);
-    z-index: 99;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 16px;
 }
 
-.timer-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.timer-time {
-    font-family: monospace;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--accent-green);
-}
-
-.timer-controls {
-    display: flex;
-    gap: 6px;
-}
-
-.timer-btn {
-    background: rgba(255, 255, 255, 0.1);
+.timer-tab-btn {
+    flex: 1;
+    background: transparent;
     border: none;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 16px;
-    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 8px;
     font-weight: 600;
+    font-size: 0.88rem;
+    border-radius: 8px;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
-.timer-btn.primary { background: var(--accent-green); color: #000; font-weight: 700; }
-.timer-btn.danger { background: rgba(255, 82, 82, 0.2); color: var(--danger); }
+.timer-tab-btn.active {
+    background: var(--card-bg);
+    color: var(--accent-green);
+    border: 1px solid var(--card-border);
+}
+
+.timer-display-big {
+    font-family: monospace;
+    font-size: 3rem;
+    font-weight: 800;
+    text-align: center;
+    color: var(--accent-green);
+    text-shadow: 0 0 20px var(--accent-green-glow);
+    margin: 10px 0 16px 0;
+}
+
+.timer-input-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.timer-input-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 65px;
+}
+
+.timer-num-input {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 8px;
+}
+
+.timer-input-box label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.timer-colon {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
 
 /* BOTTOM NAVIGÁCIÓ */
 .bottom-nav {
@@ -547,7 +607,7 @@ select.form-control {
 .modal-content {
     width: 100%;
     max-width: 400px;
-    max-height: 80vh;
+    max-height: 85vh;
     overflow-y: auto;
 }
 
