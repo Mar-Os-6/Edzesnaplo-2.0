@@ -15,7 +15,10 @@
         <div id="view-workout" class="app-view">
             <div class="header">
                 <h1>Edzés Rögzítése 💪</h1>
-                <input type="date" id="workout-date" class="date-badge-input">
+                <div class="header-right">
+                    <input type="date" id="workout-date" class="date-badge-input">
+                    <button type="button" class="timer-icon-btn" onclick="openTimerModal()" title="Időzítő / Stopper">⏱️</button>
+                </div>
             </div>
 
             <!-- AKTÍV SABLON BANNER -->
@@ -98,7 +101,7 @@
                     <input type="text" id="exercise" class="form-control" placeholder="pl. Fekvenyomás" required autocomplete="off">
                 </div>
 
-                <!-- ⚡ LEGETÓBBI SÚLY BETÖLTÉSE GOMB & HINT -->
+                <!-- ⚡ LEGUTÓBBI SÚLY BETÖLTÉSE GOMB & HINT -->
                 <div id="quick-fill-btn" class="quick-fill-btn hidden">
                     <span>⚡ Legutóbbi adatok betöltése</span>
                 </div>
@@ -132,6 +135,7 @@
         <div id="view-history" class="app-view hidden">
             <div class="header">
                 <h1>Előzmények & Naptár 📅</h1>
+                <button type="button" class="timer-icon-btn" onclick="openTimerModal()" title="Időzítő / Stopper">⏱️</button>
             </div>
 
             <!-- NAPTÁR -->
@@ -210,12 +214,13 @@
         <div id="view-body" class="app-view hidden">
             <div class="header">
                 <h1>Testadatok ⚖️</h1>
+                <button type="button" class="timer-icon-btn" onclick="openTimerModal()" title="Időzítő / Stopper">⏱️</button>
             </div>
 
             <form id="body-form" class="glass-card">
                 <div class="card-title">Új Mérés Rögzítése</div>
-                <div class="form-group">
-                    <input type="date" id="body-date" class="form-control" required>
+                <div class="form-row">
+                    <input type="date" id="body-date" class="form-control body-date-input" required>
                 </div>
                 <div class="form-row">
                     <input type="number" id="body-weight" class="form-control" step="0.1" placeholder="Testsúly (kg)">
@@ -256,16 +261,61 @@
 
     </div>
 
-    <!-- ==================== LEBEGŐ PIHENŐIDŐZÍTŐ BAR ==================== -->
-    <div id="floating-timer" class="floating-timer">
-        <div class="timer-info">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span id="floating-timer-display" class="timer-time">01:00</span>
-        </div>
-        <div class="timer-controls">
-            <button type="button" class="timer-btn" onclick="add15SecondsFloating()">+15s</button>
-            <button type="button" id="floating-timer-start-btn" class="timer-btn primary" onclick="toggleCountdown()">Indítás</button>
-            <button type="button" class="timer-btn danger" onclick="resetCountdown()">Reset</button>
+    <!-- ==================== IDŐZÍTŐ & STOPPER MODÁL ==================== -->
+    <div id="timer-modal" class="modal hidden">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3>⏱️ Időzítő & Stopper</h3>
+                <button type="button" class="close-modal-btn" onclick="closeTimerModal()">×</button>
+            </div>
+
+            <!-- TAB VÁLTÓ -->
+            <div class="timer-tab-container">
+                <button type="button" id="tab-timer-btn" class="timer-tab-btn active" onclick="switchTimerTab('timer')">Időzítő</button>
+                <button type="button" id="tab-stopwatch-btn" class="timer-tab-btn" onclick="switchTimerTab('stopwatch')">Stopper</button>
+            </div>
+
+            <!-- IDŐZÍTŐ PANEL -->
+            <div id="panel-timer" class="timer-panel">
+                <div class="timer-display-big" id="timer-modal-display">01:00</div>
+
+                <div class="timer-input-group">
+                    <div class="timer-input-box">
+                        <input type="number" id="timer-min-input" class="form-control timer-num-input" min="0" max="999" value="1">
+                        <label>perc</label>
+                    </div>
+                    <span class="timer-colon">:</span>
+                    <div class="timer-input-box">
+                        <input type="number" id="timer-sec-input" class="form-control timer-num-input" min="0" max="59" value="0">
+                        <label>mp</label>
+                    </div>
+                    <button type="button" class="btn-secondary" onclick="applyCustomTimer()" style="align-self: flex-start; margin-top: 2px;">Beállít</button>
+                </div>
+
+                <div class="chip-container" style="justify-content: center; margin: 12px 0;">
+                    <div class="chip" onclick="setTimerPreset(15)">+15 mp</div>
+                    <div class="chip" onclick="setTimerPreset(30)">30 mp</div>
+                    <div class="chip" onclick="setTimerPreset(60)">1 perc</div>
+                    <div class="chip" onclick="setTimerPreset(90)">1.5 perc</div>
+                    <div class="chip" onclick="setTimerPreset(120)">2 perc</div>
+                    <div class="chip" onclick="setTimerPreset(180)">3 perc</div>
+                </div>
+
+                <div class="btn-group" style="margin-top: 16px;">
+                    <button type="button" id="timer-start-btn" class="btn-main" onclick="toggleCountdown()">Indítás</button>
+                    <button type="button" class="btn-danger-outline" onclick="resetCountdown()">Reset</button>
+                </div>
+            </div>
+
+            <!-- STOPPER PANEL -->
+            <div id="panel-stopwatch" class="timer-panel hidden">
+                <div class="timer-display-big" id="stopwatch-modal-display">00:00.0</div>
+
+                <div class="btn-group" style="margin-top: 20px;">
+                    <button type="button" id="stopwatch-start-btn" class="btn-main" onclick="toggleStopwatch()">Indítás</button>
+                    <button type="button" class="btn-danger-outline" onclick="resetStopwatch()">Reset</button>
+                </div>
+            </div>
         </div>
     </div>
 
