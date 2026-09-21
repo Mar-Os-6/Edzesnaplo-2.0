@@ -3,371 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edzésnapló - UI Redesign Mockup</title>
-    <style>
-        :root {
-            --bg-color: #0b0d12;
-            --card-bg: rgba(23, 27, 38, 0.7);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --accent-green: #00e676;
-            --accent-green-glow: rgba(0, 230, 118, 0.25);
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --input-bg: rgba(15, 23, 42, 0.6);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(0, 230, 118, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
-        }
-
-        /* Mobil nézet szimuláció */
-        .app-container {
-            width: 100%;
-            max-width: 430px;
-            min-height: 100vh;
-            padding: 20px 16px 120px 16px;
-            position: relative;
-        }
-
-        /* Fejléc */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #fff 0%, #a5f3fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .date-badge {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Glassmorphism kártyák */
-        .glass-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 16px;
-            padding: 18px;
-            margin-bottom: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        .card-title {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* Gyors kitöltés gomb */
-        .quick-fill-btn {
-            width: 100%;
-            background: rgba(0, 230, 118, 0.08);
-            border: 1px dashed var(--accent-green);
-            color: var(--accent-green);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            cursor: pointer;
-            margin-bottom: 14px;
-            transition: all 0.2s ease;
-        }
-
-        .quick-fill-btn:active {
-            transform: scale(0.98);
-            background: var(--accent-green-glow);
-        }
-
-        /* Form Elemek */
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-control {
-            width: 100%;
-            background: var(--input-bg);
-            border: 1px solid var(--card-border);
-            color: var(--text-main);
-            padding: 12px 14px;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .form-control:focus {
-            border-color: var(--accent-green);
-        }
-
-        /* Sorozatok sora */
-        .set-row {
-            display: grid;
-            grid-template-columns: 35px 1fr 1fr 35px;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .set-num {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .btn-main {
-            width: 100%;
-            background: var(--accent-green);
-            color: #000;
-            font-weight: 700;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            cursor: pointer;
-            box-shadow: 0 4px 20px var(--accent-green-glow);
-            transition: transform 0.15s ease;
-        }
-
-        .btn-main:active {
-            transform: scale(0.97);
-        }
-
-        /* PR Rekord Badge */
-        .pr-badge {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            font-size: 0.7rem;
-            font-weight: 800;
-            padding: 2px 8px;
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
-        }
-
-        /* LEBEGŐ PIHENŐIDŐZÍTŐ (Floating Rest Timer) */
-        .floating-timer {
-            position: fixed;
-            bottom: 75px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: calc(100% - 32px);
-            max-width: 398px;
-            background: rgba(18, 24, 38, 0.9);
-            border: 1px solid var(--accent-green);
-            backdrop-filter: blur(16px);
-            border-radius: 50px;
-            padding: 10px 18px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 15px var(--accent-green-glow);
-            z-index: 99;
-        }
-
-        .timer-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .timer-time {
-            font-family: monospace;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--accent-green);
-        }
-
-        .timer-controls {
-            display: flex;
-            gap: 8px;
-        }
-
-        .timer-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-
-        /* BOTTOM NAVIGÁCIÓ */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 430px;
-            background: rgba(11, 13, 18, 0.85);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid var(--card-border);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0 16px 0;
-            z-index: 100;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: var(--text-muted);
-            font-size: 0.72rem;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .nav-item.active {
-            color: var(--accent-green);
-        }
-
-        .nav-item svg {
-            width: 22px;
-            height: 22px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-    </style>
+    <title>Edzésnapló</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
     <div class="app-container">
-        
-        <!-- Fejléc -->
-        <div class="header">
-            <h1>Szia, Krisztián! 💪</h1>
-            <div class="date-badge">Ma, Május 12.</div>
-        </div>
 
-        <!-- Aktív Gyakorlat Kártya -->
-        <div class="glass-card">
-            <div class="card-title">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.4 9.6a2 2 0 1 1 3.2 2.4L18 16l-3 3-4-4 3-3 4.4-2.4z"/><path d="M15.6 6.8a2 2 0 1 0-3.2-2.4L9 8 6 5l-4 4 3 3-2.4 4.4a2 2 0 1 0 2.4 3.2L12 16l3 3 4-4-3-3 3.6-5.2z"/></svg>
-                Gyakorlat Rögzítése
+        <!-- ==================== EDZÉS NÉZET ==================== -->
+        <div id="view-workout" class="app-view">
+            <div class="header">
+                <h1>Edzés Rögzítése 💪</h1>
+                <input type="date" id="workout-date" class="date-badge-input">
             </div>
 
-            <div class="form-group">
-                <select class="form-control">
-                    <option>Mell (Fekvenyomás)</option>
-                    <option>Tricepsz (Letolás csigán)</option>
-                </select>
+            <!-- AKTÍV SABLON BANNER -->
+            <div id="active-template-banner" class="glass-card active-banner hidden">
+                <div id="active-template-info">📋 Sablon folyamatban...</div>
+                <button type="button" id="cancel-template-btn" class="btn-secondary small">Mégse</button>
             </div>
 
-            <!-- ⚡ UX 2. OPCIÓ: Gyorsszint-betöltő gomb -->
-            <div class="quick-fill-btn">
-                <span>⚡ Legutóbbi: 85 kg × 8 ismétlés</span>
-                <small style="opacity: 0.7">(Kattints a betöltéshez)</small>
-            </div>
-
-            <!-- Sorozatok -->
-            <div class="set-row">
-                <span class="set-num">1.</span>
-                <input type="number" class="form-control" value="85" placeholder="kg">
-                <input type="number" class="form-control" value="8" placeholder="ism">
-                <div class="pr-badge">PR</div>
-            </div>
-
-            <div class="set-row">
-                <span class="set-num">2.</span>
-                <input type="number" class="form-control" placeholder="kg">
-                <input type="number" class="form-control" placeholder="ism">
-                <span style="color: var(--text-muted); text-align:center;">✕</span>
-            </div>
-
-            <button class="btn-main" style="margin-top: 10px;">Sorozat Mentése & Stopper Indítása</button>
-        </div>
-
-        <!-- Előzmény Kártya -->
-        <div class="glass-card">
-            <div class="card-title">Mai Teljesítmény</div>
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;">
-                <div>
-                    <strong>Incline Fekvenyomás</strong><br>
-                    <small style="color: var(--text-muted);">3 sorozat • Mell</small>
+            <!-- EDZÉSTERV SABLONOK -->
+            <div class="glass-card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Edzésterv Sablonok
                 </div>
-                <div style="text-align: right; color: var(--accent-green); font-weight: 700;">
-                    75 kg × 10
+                <div class="template-controls">
+                    <select id="template-select" class="form-control">
+                        <option value="">-- Válassz edzéstervet --</option>
+                    </select>
+                    <div class="btn-group">
+                        <button type="button" id="start-template-btn" class="btn-action">Indítás</button>
+                        <button type="button" id="edit-template-btn" class="btn-secondary">Szerkesztés</button>
+                    </div>
+                </div>
+                <div class="btn-group" style="margin-top: 8px;">
+                    <button type="button" id="toggle-new-template-btn" class="btn-outline">+ Új Sablon</button>
+                    <button type="button" id="delete-template-btn" class="btn-danger-outline">Törlés</button>
+                </div>
+
+                <!-- SABLON ÉPÍTŐ DOBOZ -->
+                <div id="create-template-box" class="template-builder hidden">
+                    <h3 id="template-form-title">✨ Új Sablon</h3>
+                    <input type="text" id="new-template-name" class="form-control" placeholder="Sablon neve (pl. A nap: Mell-Tricepsz)">
+                    
+                    <label class="input-label">Izomcsoportok:</label>
+                    <div id="template-muscle-chips" class="chip-container"></div>
+                    
+                    <label class="input-label">Elérhető gyakorlatok:</label>
+                    <div id="template-available-exercises" class="chip-container"></div>
+
+                    <div class="custom-ex-input-group">
+                        <input type="text" id="custom-template-ex-input" class="form-control" placeholder="Saját gyakorlat hozzáadása...">
+                        <button type="button" id="add-custom-template-ex-btn" class="btn-secondary">+</button>
+                    </div>
+
+                    <label class="input-label">Kiválasztott gyakorlatok:</label>
+                    <div id="template-selected-exercises" class="selected-ex-list"></div>
+
+                    <div class="btn-group" style="margin-top: 12px;">
+                        <button type="button" id="save-new-template-btn" class="btn-main">Mentés</button>
+                        <button type="button" id="cancel-new-template-btn" class="btn-secondary">Mégse</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GYAKORLAT RÖGZÍTŐ FORM -->
+            <form id="workout-form" class="glass-card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24"><path d="M18 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M12 8v8M8 12h8"/></svg>
+                    Gyakorlat Rögzítése
+                </div>
+
+                <div class="form-group">
+                    <label class="input-label">Izomcsoport:</label>
+                    <select id="muscle-group" class="form-control">
+                        <option value="Mell">Mell</option>
+                        <option value="Bicepsz">Bicepsz</option>
+                        <option value="Hát">Hát</option>
+                        <option value="Tricepsz">Tricepsz</option>
+                        <option value="Váll">Váll</option>
+                        <option value="Láb">Láb</option>
+                        <option value="Popsi">Popsi</option>
+                        <option value="Has">Has</option>
+                        <option value="Kardió">Kardió</option>
+                    </select>
+                </div>
+
+                <div id="quick-exercises" class="chip-container"></div>
+
+                <div class="form-group">
+                    <input type="text" id="exercise" class="form-control" placeholder="pl. Fekvenyomás" required autocomplete="off">
+                </div>
+
+                <!-- ⚡ LEGETÓBBI SÚLY BETÖLTÉSE GOMB & HINT -->
+                <div id="quick-fill-btn" class="quick-fill-btn hidden">
+                    <span>⚡ Legutóbbi adatok betöltése</span>
+                </div>
+                <div id="history-hint" class="history-hint-text"></div>
+
+                <!-- SÚLYZÓS MEZŐK -->
+                <div id="resistance-fields">
+                    <div id="sets-container"></div>
+                    <button type="button" id="add-set-btn" class="btn-outline" style="margin-top: 8px;">+ Új sorozat</button>
+                </div>
+
+                <!-- KARDIÓ MEZŐK -->
+                <div id="cardio-fields" class="hidden">
+                    <div class="form-row">
+                        <input type="number" id="cardio-time" class="form-control" placeholder="Idő (perc)">
+                        <input type="text" id="cardio-incline" class="form-control" placeholder="Dőlésszög (pl. 12%)">
+                        <input type="number" id="cardio-speed" class="form-control" step="0.1" placeholder="Sebesség (km/h)">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 12px;">
+                    <input type="text" id="note" class="form-control" placeholder="Jegyzet (pl. könnyen ment, szuperszett...)">
+                </div>
+
+                <button type="submit" class="btn-main" style="margin-top: 14px;">Gyakorlat Mentése</button>
+            </form>
+        </div>
+
+
+        <!-- ==================== ELŐZMÉNYEK NÉZET ==================== -->
+        <div id="view-history" class="app-view hidden">
+            <div class="header">
+                <h1>Előzmények & Naptár 📅</h1>
+            </div>
+
+            <!-- NAPTÁR -->
+            <div class="glass-card">
+                <div class="calendar-header">
+                    <button type="button" class="btn-icon" onclick="changeMonth(-1)">❮</button>
+                    <h3 id="calendar-month-title">2026 Március</h3>
+                    <button type="button" class="btn-icon" onclick="changeMonth(1)">❯</button>
+                </div>
+                <div class="calendar-weekdays">
+                    <span>H</span><span>K</span><span>Sze</span><span>Cs</span><span>P</span><span>Szo</span><span>V</span>
+                </div>
+                <div id="calendar-days" class="calendar-grid"></div>
+            </div>
+
+            <!-- PR ÖSSZESÍTŐ -->
+            <div class="glass-card">
+                <div class="card-title">🏆 Egyéni Rekordok (PR)</div>
+                <div id="pr-summary-container" class="pr-grid"></div>
+            </div>
+
+            <!-- FEJLŐDÉSI GRAFIKON -->
+            <div class="glass-card">
+                <div class="card-title">📈 Fejlődési Grafikon</div>
+                <select id="chart-exercise-select" class="form-control" onchange="renderChart()" style="margin-bottom: 12px;">
+                    <option value="">-- Válassz gyakorlatot --</option>
+                </select>
+                <div id="chart-container" class="chart-box"></div>
+            </div>
+
+            <!-- ELŐZMÉNYEK TÁBLÁZAT ÉS SZŰRŐ -->
+            <div class="glass-card">
+                <div class="card-title">📋 Edzésnapló</div>
+                <input type="text" id="search-filter" class="form-control" placeholder="Keresés gyakorlatra vagy jegyzetre..." style="margin-bottom: 10px;">
+                
+                <div id="history-filter-chips" class="chip-container" style="margin-bottom: 12px;">
+                    <div class="chip active" onclick="filterHistoryByMuscle('Összes', this)">Összes</div>
+                    <div class="chip" onclick="filterHistoryByMuscle('Mell', this)">Mell</div>
+                    <div class="chip" onclick="filterHistoryByMuscle('Bicepsz', this)">Bicepsz</div>
+                    <div class="chip" onclick="filterHistoryByMuscle('Hát', this)">Hát</div>
+                    <div class="chip" onclick="filterHistoryByMuscle('Tricepsz', this)">Tricepsz</div>
+                    <div class="chip" onclick="filterHistoryByMuscle('Váll', this)">Váll</div>
+                    <div class="chip" onclick="filterHistoryByMuscle('Láb', this)">Láb</div>
+                    <div class="chip" onclick="filterHistoryByMuscle('Popsi', this)">Popsi</div>
+                    <div class="chip" onclick="filterHistoryByMuscle('Has', this)">Has</div>
+                    <div class="chip" onclick="filterHistoryByMuscle('Kardió', this)">Kardió</div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Dátum</th>
+                                <th>Izom</th>
+                                <th>Gyakorlat</th>
+                                <th>Súly / Idő</th>
+                                <th>Ismétlés</th>
+                                <th>Jegyzet</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="workout-list"></tbody>
+                    </table>
+                </div>
+
+                <div class="btn-group" style="margin-top: 14px;">
+                    <button type="button" id="export-btn" class="btn-secondary">Exportál (JSON)</button>
+                    <button type="button" id="import-btn" class="btn-secondary">Importál</button>
+                    <input type="file" id="import-file" accept=".json" class="hidden">
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ==================== TESTADATOK NÉZET ==================== -->
+        <div id="view-body" class="app-view hidden">
+            <div class="header">
+                <h1>Testadatok ⚖️</h1>
+            </div>
+
+            <form id="body-form" class="glass-card">
+                <div class="card-title">Új Mérés Rögzítése</div>
+                <div class="form-group">
+                    <input type="date" id="body-date" class="form-control" required>
+                </div>
+                <div class="form-row">
+                    <input type="number" id="body-weight" class="form-control" step="0.1" placeholder="Testsúly (kg)">
+                    <input type="number" id="body-fat" class="form-control" step="0.1" placeholder="Testzsír (%)">
+                </div>
+                <div class="form-row">
+                    <input type="number" id="body-chest" class="form-control" step="0.5" placeholder="Mellkas (cm)">
+                    <input type="number" id="body-arm" class="form-control" step="0.5" placeholder="Kar (cm)">
+                </div>
+                <div class="form-row">
+                    <input type="number" id="body-waist" class="form-control" step="0.5" placeholder="Dereka (cm)">
+                    <input type="number" id="body-thigh" class="form-control" step="0.5" placeholder="Comb (cm)">
+                </div>
+                <button type="submit" class="btn-main" style="margin-top: 12px;">Mérés Mentése</button>
+            </form>
+
+            <div class="glass-card">
+                <div class="card-title">Mérési Előzmények</div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Dátum</th>
+                                <th>Súly</th>
+                                <th>Zsír%</th>
+                                <th>Mell</th>
+                                <th>Kar</th>
+                                <th>Derék</th>
+                                <th>Comb</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-list"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- ⏱️ UX 2. OPCIÓ: LEBEGŐ PIHENŐIDŐZÍTŐ (Mindig látható) -->
-    <div class="floating-timer">
+    <!-- ==================== LEBEGŐ PIHENŐIDŐZÍTŐ BAR ==================== -->
+    <div id="floating-timer" class="floating-timer">
         <div class="timer-info">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e676" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span class="timer-time">00:48</span>
+            <span id="floating-timer-display" class="timer-time">01:00</span>
         </div>
         <div class="timer-controls">
-            <button class="timer-btn">+15s</button>
-            <button class="timer-btn" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">Stop</button>
+            <button type="button" class="timer-btn" onclick="add15SecondsFloating()">+15s</button>
+            <button type="button" id="floating-timer-start-btn" class="timer-btn primary" onclick="toggleCountdown()">Indítás</button>
+            <button type="button" class="timer-btn danger" onclick="resetCountdown()">Reset</button>
         </div>
     </div>
 
-    <!-- 🎨 UI 1. OPCIÓ: MODERN BOTTOM NAVIGÁCIÓ SVG IKONOKKAL -->
+    <!-- ==================== BOTTOM NAVIGÁCIÓ ==================== -->
     <div class="bottom-nav">
-        <a class="nav-item active">
+        <a class="nav-item active" onclick="switchTab('workout')">
             <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M4 10h16M4 14h16"/></svg>
             Edzés
         </a>
-        <a class="nav-item">
+        <a class="nav-item" onclick="switchTab('history')">
             <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
             Előzmények
         </a>
-        <a class="nav-item">
+        <a class="nav-item" onclick="switchTab('body')">
             <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Testadatok
         </a>
     </div>
 
+    <!-- ==================== NAPTÁR DAY MODÁL ==================== -->
+    <div id="day-modal" class="modal hidden">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3 id="modal-date-title">📅 Összefoglaló</h3>
+                <button type="button" class="close-modal-btn" onclick="closeDayModal()">×</button>
+            </div>
+            <div id="modal-body-content" class="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
