@@ -68,10 +68,6 @@ const dayModal = document.getElementById('day-modal');
 const modalDateTitle = document.getElementById('modal-date-title');
 const modalBodyContent = document.getElementById('modal-body-content');
 
-// IDŐZÍTŐ ELEMEK
-const floatingTimerDisplay = document.getElementById('floating-timer-display');
-const floatingTimerStartBtn = document.getElementById('floating-timer-start-btn');
-
 dateInput.value = new Date().toISOString().split('T')[0];
 if (bodyDateInput) bodyDateInput.value = new Date().toISOString().split('T')[0];
 
@@ -829,8 +825,8 @@ form.addEventListener('submit', function(e) {
     populateChartExerciseSelect();
     renderCalendar();
 
-    // PIHENŐIDŐZÍTŐ INDÍTÁSA SIKERES MENTÉSKOR
-    setCountdownPreset(60);
+    // PIHENŐIDŐZÍTŐ INDÍTÁSA SIKERES MENTÉSKOR (alapértelmezett 60s)
+    if (cdTotalSeconds <= 0) cdTotalSeconds = 60;
     toggleCountdown();
 
     if (activeSession) {
@@ -979,23 +975,77 @@ function filterWorkoutsTable() {
     });
 }
 
-// --- LEBEGŐ PIHENŐIDŐZÍTŐ LOGIKA ---
+// --- IDŐZÍTŐ & STOPPER MODÁL LOGIKA ---
 let cdInterval = null, cdTotalSeconds = 60;
+let swInterval = null, swStartTime = 0, swElapsedTime = 0;
 
+function openTimerModal() {
+    document.getElementById('timer-modal').classList.remove('hidden');
+}
+
+function closeTimerModal() {
+    document.getElementById('timer-modal').classList.add('hidden');
+}
+
+window.addEventListener('click', (e) => {
+    const timerModal = document.getElementById('timer-modal');
+    if (e.target === timerModal) closeTimerModal();
+});
+
+function switchTimerTab(tab) {
+    const tabTimerBtn = document.getElementById('tab-timer-btn');
+    const tabStopwatchBtn = document.getElementById('tab-stopwatch-btn');
+    const panelTimer = document.getElementById('panel-timer');
+    const panelStopwatch = document.getElementById('panel-stopwatch');
+
+    if (tab === 'timer') {
+        tabTimerBtn.classList.add('active');
+        tabStopwatchBtn.classList.remove('active');
+        panelTimer.classList.remove('hidden');
+        panelStopwatch.classList.add('hidden');
+    } else {
+        tabStopwatchBtn.classList.add('active');
+        tabTimerBtn.classList.remove('active');
+        panelStopwatch.classList.remove('hidden');
+        panelTimer.classList.add('hidden');
+    }
+}
+
+// --- IDŐZÍTŐ FUNKCIÓK ---
 function updateFloatingTimerDisplay() {
     const mins = String(Math.floor(cdTotalSeconds / 60)).padStart(2, '0');
     const secs = String(cdTotalSeconds % 60).padStart(2, '0');
-    if (floatingTimerDisplay) floatingTimerDisplay.textContent = `${mins}:${secs}`;
+    const timerDisplay = document.getElementById('timer-modal-display');
+    if (timerDisplay) timerDisplay.textContent = `${mins}:${secs}`;
+    
+    // Ikon pulzálása, ha fut az időzítő
+    const timerBtns = document.querySelectorAll('.timer-icon-btn');
+    timerBtns.forEach(btn => {
+        if (cdInterval) btn.classList.add('active-running');
+        else btn.classList.remove('active-running');
+    });
 }
 
-function setCountdownPreset(seconds) {
-    resetCountdown();
-    cdTotalSeconds = seconds;
-    updateFloatingTimerDisplay();
+function applyCustomTimer() {
+    const minInput = parseInt(document.getElementById('timer-min-input').value) || 0;
+    const secInput = parseInt(document.getElementById('timer-sec-input').value) || 0;
+    const totalSecs = minInput * 60 + secInput;
+    if (totalSecs > 0) {
+        resetCountdown();
+        cdTotalSeconds = totalSecs;
+        updateFloatingTimerDisplay();
+    }
 }
 
-function add15SecondsFloating() {
-    cdTotalSeconds += 15;
+function setTimerPreset(seconds) {
+    if (seconds === 15) {
+        cdTotalSeconds += 15;
+    } else {
+        resetCountdown();
+        cdTotalSeconds = seconds;
+    }
+    document.getElementById('timer-min-input').value = Math.floor(cdTotalSeconds / 60);
+    document.getElementById('timer-sec-input').value = cdTotalSeconds % 60;
     updateFloatingTimerDisplay();
 }
 
@@ -1015,34 +1065,74 @@ function playBeep() {
 }
 
 function toggleCountdown() {
+    const startBtn = document.getElementById('timer-start-btn');
     if (cdInterval) {
         clearInterval(cdInterval);
         cdInterval = null;
-        if (floatingTimerStartBtn) floatingTimerStartBtn.textContent = 'Indítás';
+        if (startBtn) startBtn.textContent = 'Indítás';
     } else {
+        if (cdTotalSeconds <= 0) applyCustomTimer();
         if (cdTotalSeconds <= 0) cdTotalSeconds = 60;
+        
         cdInterval = setInterval(() => {
             cdTotalSeconds--;
             updateFloatingTimerDisplay();
             if (cdTotalSeconds <= 0) {
                 clearInterval(cdInterval);
                 cdInterval = null;
-                if (floatingTimerStartBtn) floatingTimerStartBtn.textContent = 'Indítás';
+                if (startBtn) startBtn.textContent = 'Indítás';
                 if ('vibrate' in navigator) navigator.vibrate([300, 100, 300, 100, 300]);
                 playBeep();
                 alert('⏱️ Lejárt a pihenőidő!');
             }
         }, 1000);
-        if (floatingTimerStartBtn) floatingTimerStartBtn.textContent = 'Szünet';
+        if (startBtn) startBtn.textContent = 'Szünet';
     }
+    updateFloatingTimerDisplay();
 }
 
 function resetCountdown() {
     clearInterval(cdInterval);
     cdInterval = null;
-    cdTotalSeconds = 60;
+    applyCustomTimer();
     updateFloatingTimerDisplay();
-    if (floatingTimerStartBtn) floatingTimerStartBtn.textContent = 'Indítás';
+    const startBtn = document.getElementById('timer-start-btn');
+    if (startBtn) startBtn.textContent = 'Indítás';
+}
+
+// --- STOPPER FUNKCIÓK ---
+function updateStopwatchDisplay() {
+    const totalMs = swElapsedTime;
+    const mins = String(Math.floor(totalMs / 60000)).padStart(2, '0');
+    const secs = String(Math.floor((totalMs % 60000) / 1000)).padStart(2, '0');
+    const tenths = Math.floor((totalMs % 1000) / 100);
+    const swDisplay = document.getElementById('stopwatch-modal-display');
+    if (swDisplay) swDisplay.textContent = `${mins}:${secs}.${tenths}`;
+}
+
+function toggleStopwatch() {
+    const startBtn = document.getElementById('stopwatch-start-btn');
+    if (swInterval) {
+        clearInterval(swInterval);
+        swInterval = null;
+        if (startBtn) startBtn.textContent = 'Indítás';
+    } else {
+        swStartTime = Date.now() - swElapsedTime;
+        swInterval = setInterval(() => {
+            swElapsedTime = Date.now() - swStartTime;
+            updateStopwatchDisplay();
+        }, 100);
+        if (startBtn) startBtn.textContent = 'Szünet';
+    }
+}
+
+function resetStopwatch() {
+    clearInterval(swInterval);
+    swInterval = null;
+    swElapsedTime = 0;
+    updateStopwatchDisplay();
+    const startBtn = document.getElementById('stopwatch-start-btn');
+    if (startBtn) startBtn.textContent = 'Indítás';
 }
 
 // SERVICE WORKER
