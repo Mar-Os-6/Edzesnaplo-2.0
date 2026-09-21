@@ -1,0 +1,16 @@
+{
+  "name": "Edzésnapló",
+  "short_name": "Edzésnapló",
+  "description": "Edzés, rekordok és testadatok követése",
+  "lang": "hu",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c0f0e",
+  "theme_color": "#0c0f0e",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
