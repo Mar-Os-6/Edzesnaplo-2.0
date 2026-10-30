@@ -249,6 +249,23 @@ function confirmDialog(message, { title = 'Biztos vagy benne?', ok = 'Rendben', 
     });
 }
 
+function promptDialog({ title, label = '', value = '', ok = 'Mentés', cancel = 'Mégse' }) {
+    return new Promise(resolve => {
+        const input = h('input', { type: 'text', class: 'inp', value, 'aria-label': title, enterkeyhint: 'done', autocomplete: 'off' });
+        const done = v => { box.remove(); resolve(v); };
+        const submit = () => { const v = input.value.trim(); if (!v) { input.focus(); return; } done(v); };
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+        const box = h('div', { class: 'confirm', role: 'dialog', 'aria-modal': 'true', onClick: e => { if (e.target === box) done(null); } },
+            h('div', { class: 'confirm-box' },
+                h('h3', {}, title), label ? h('p', { style: 'margin-bottom:12px' }, label) : null, input,
+                h('div', { class: 'btn-row', style: 'margin-top:16px' },
+                    h('button', { type: 'button', class: 'btn grow', onClick: () => done(null) }, cancel),
+                    h('button', { type: 'button', class: 'btn grow primary', onClick: submit }, ok))));
+        document.body.append(box);
+        input.focus(); input.select();
+    });
+}
+
 const openSheets = new Set();
 function openSheet(id) {
     const s = document.getElementById(id);
@@ -563,13 +580,78 @@ function renderQuickExercises() {
     const current = exKey($('#exercise').value);
     list.forEach(name => {
         const active = !quickEdit && current && exKey(name) === current;
-        const chip = h('button', { type: 'button', class: 'chip small' + (active ? ' on' : ''), onClick: () => { if (!quickEdit) { $('#exercise').value = name; onExerciseChosen(); } } }, name);
+        const chip = h('button', { type: 'button', class: 'chip small' + (active ? ' on' : ''), onClick: () => {
+            if (quickEdit) renameExercise(L.muscle, name);
+            else { $('#exercise').value = name; onExerciseChosen(); }
+        } }, name);
         if (quickEdit) {
+            chip.append(h('span', { html: icon('pencil', 'sm'), style: 'display:inline-flex;color:var(--ac);margin-left:2px', 'aria-label': `${name} átnevezése` }));
             chip.append(h('span', { class: 'x', html: icon('x', 'sm'), 'aria-label': `${name} törlése`,
                 onClick: e => { e.stopPropagation(); removeQuickExercise(L.muscle, name); } }));
         }
         box.append(chip);
     });
+    if (quickEdit && list.length) box.append(h('span', { class: 'quiet', style: 'flex-basis:100%;font-size:.78rem' }, 'Koppints a névre az átnevezéshez. Az × csak a gyors listából veszi ki, az előzmények megmaradnak.'));
+}
+
+/* Átnevezés: az előzmények, rekordok, sablonok és az aktív edzés is az új nevet kapják */
+async function renameExercise(group, oldName) {
+    const typed = await promptDialog({ title: 'Gyakorlat átnevezése', label: 'Az előzmények, a rekordok és a sablonok is az új nevet kapják.', value: oldName, ok: 'Átnevezés' });
+    if (typed === null) return;
+    let newName = typed.replace(/\s+/g, ' ').trim();
+    if (!newName || newName === oldName) return;
+    const oldKey = exKey(oldName), newKey = exKey(newName);
+
+    if (oldKey !== newKey) {
+        let existing = null;
+        for (const l of Object.values(getExercises())) { const f = l.find(x => exKey(x) === newKey); if (f) { existing = f; break; } }
+        if (!existing && analyze().ex.has(newKey)) existing = analyze().ex.get(newKey).name;
+        if (existing) {
+            const ok = await confirmDialog(`Már van „${existing}” nevű gyakorlat. Ha folytatod, a két gyakorlat előzményei összevonódnak.`, { title: 'Összevonás?', ok: 'Összevonás' });
+            if (!ok) return;
+            newName = existing;   // a már meglévő írásmódot használjuk
+        }
+    }
+
+    // 1) mentett edzések
+    setWorkouts(getWorkouts().map(w => exKey(w.exercise) === oldKey ? { ...w, exercise: newName } : w));
+
+    // 2) gyors választás listák (duplikátumot nem hagyunk)
+    const all = getExercises();
+    for (const g in all) {
+        const seen = new Set();
+        all[g] = all[g].map(x => exKey(x) === oldKey ? newName : x).filter(x => {
+            const k = exKey(x);
+            if (seen.has(k)) return false;
+            seen.add(k); return true;
+        });
+    }
+    setExercises(all);
+
+    // 3) sablonok
+    let tplChanged = false;
+    const tpls = getTemplates();
+    tpls.forEach(t => {
+        t.exercises = t.exercises.map(x => {
+            if (typeof x === 'string') { if (exKey(x) === oldKey) { tplChanged = true; return newName; } return x; }
+            if (exKey(x.name) === oldKey) { tplChanged = true; return { ...x, name: newName }; }
+            return x;
+        });
+    });
+    if (tplChanged) setTemplates(tpls);
+
+    // 4) futó edzés, űrlap, statisztika
+    if (session) {
+        session.exercises.forEach(x => { if (exKey(x.name) === oldKey) x.name = newName; });
+        persistSession();
+    }
+    if (exKey($('#exercise').value) === oldKey) $('#exercise').value = newName;
+    if (S.ex === oldKey) S.ex = newKey;
+
+    saveDraft();
+    refreshAll();
+    renderQuickExercises();
+    toast('Átnevezve.');
 }
 function removeQuickExercise(group, name) {
     const all = getExercises();
@@ -609,6 +691,7 @@ function makeSetRow(w = '', r = '', done = false) {
     const check = h('button', { type: 'button', class: 'check-btn', 'aria-label': 'Sorozat kész', html: icon('check'), onClick: () => {
         const nowDone = !row.classList.contains('done');
         row.classList.toggle('done', nowDone);
+        updateRemoveBtn();
         if (nowDone) {
             if (wIn.value === '' && num(wIn.placeholder) !== null) wIn.value = raw(num(wIn.placeholder));
             if (rIn.value === '' && num(rIn.placeholder) !== null) rIn.value = raw(num(rIn.placeholder));
@@ -620,10 +703,37 @@ function makeSetRow(w = '', r = '', done = false) {
     row.append(h('span', { class: 'set-num' }), stepper(wIn, 2.5), stepper(rIn, 1), check);
     return row;
 }
+function updateRemoveBtn() {
+    const rows = setRows();
+    const ticked = rows.filter(r => r.classList.contains('done')).length;
+    const btn = $('#remove-set-btn');
+    btn.disabled = rows.length <= 1;
+    btn.classList.toggle('danger', ticked > 0 && rows.length > 1);
+    btn.setAttribute('aria-label', ticked ? 'Kijelölt sorozat törlése' : 'Utolsó sorozat törlése');
+}
 function renumber() {
     const rows = setRows();
     rows.forEach((r, i) => { $('.set-num', r).textContent = i + 1; });
-    $('#remove-set-btn').disabled = rows.length <= 1;
+    updateRemoveBtn();
+}
+/* Ha van kipipált sorozat, azt/azokat törli, különben az utolsót */
+function removeSelectedSets() {
+    const rows = setRows();
+    if (rows.length <= 1) return;
+    const ticked = rows.filter(r => r.classList.contains('done'));
+    const targets = ticked.length ? ticked : [rows[rows.length - 1]];
+    const snap = targets.map(r => ({ idx: rows.indexOf(r), w: $('.set-weight', r).value, r: $('.set-reps', r).value, done: r.classList.contains('done') }));
+    targets.forEach(r => r.remove());
+    let filler = null;
+    if (!setRows().length) { addSetRow(); filler = setRows()[0]; }
+    renumber(); refreshPlaceholders(); saveDraft();
+    const msg = snap.length > 1 ? `${snap.length} sorozat törölve` : `${snap[0].idx + 1}. sorozat törölve`;
+    toast(msg, { action: 'Visszavonás', onAction: () => {
+        if (filler && filler.isConnected) filler.remove();
+        const cont = $('#sets-container');
+        snap.forEach(x => cont.insertBefore(makeSetRow(x.w, x.r, x.done), cont.children[x.idx] || null));
+        renumber(); refreshPlaceholders(); saveDraft();
+    } });
 }
 function addSetRow(vals = {}, copyPrev = false) {
     let w = vals.w ?? '', r = vals.r ?? '';
@@ -715,11 +825,37 @@ function onExerciseChosen() {
     updateLastBox(); refreshPlaceholders(); saveDraft(); renderQuickExercises();
 }
 
+/* --- dátum: alapból mindig a mai nap, kézzel átállítható --- */
+let dateManual = false, dateManualDay = '';
+function renderDateHint() {
+    const lab = $('label[for="workout-date"]'), btn = $('#date-today-btn');
+    if (lab) { lab.textContent = dateManual ? 'Dátum (nem a mai nap)' : 'Dátum'; lab.style.color = dateManual ? 'var(--gold)' : ''; }
+    if (btn) btn.classList.toggle('hidden', !dateManual);
+}
+function setLogDate(iso, manual) {
+    const today = isoDate();
+    const input = $('#workout-date');
+    input.value = iso || today;
+    dateManual = !!manual && input.value !== today;
+    dateManualDay = dateManual ? today : '';
+    renderDateHint();
+}
+/* Új nap kezdetekor (vagy az app újranyitásakor) visszaáll a mai napra, ha nem kézzel állítottad át */
+function syncLogDate() {
+    const today = isoDate(), input = $('#workout-date');
+    if (dateManual && dateManualDay !== today) dateManual = false;
+    if (!dateManual && input.value !== today) {
+        input.value = today;
+        updateLastBox(); refreshPlaceholders(); renderDayLog(); saveDraft();
+    }
+    renderDateHint();
+}
+
 /* --- piszkozat: újratöltés után sem vész el, amit beírtál --- */
 let draftTimer = null;
 function collectDraft() {
     return {
-        date: $('#workout-date').value, muscle: L.muscle, exercise: $('#exercise').value, note: $('#note').value,
+        date: $('#workout-date').value, dateManual, draftDay: isoDate(), muscle: L.muscle, exercise: $('#exercise').value, note: $('#note').value,
         sets: setRows().map(r => ({ w: $('.set-weight', r).value, r: $('.set-reps', r).value, done: r.classList.contains('done') })),
         cardio: { t: $('#cardio-time').value, s: $('#cardio-speed').value, i: $('#cardio-incline').value }
     };
@@ -735,7 +871,9 @@ function saveDraft() {
 function restoreDraft() {
     const d = LS.get('draft', null);
     if (!d) return false;
-    if (d.date && /^\d{4}-\d{2}-\d{2}$/.test(d.date)) $('#workout-date').value = d.date;
+    // a piszkozat dátumát csak akkor tartjuk meg, ha kézzel állítottad át, és még ugyanaz a nap van
+    const keepDate = d.dateManual && d.draftDay === isoDate() && d.date && /^\d{4}-\d{2}-\d{2}$/.test(d.date);
+    setLogDate(keepDate ? d.date : isoDate(), !!keepDate);
     if (d.muscle) setMuscle(d.muscle, { keepExercise: true, keepSets: true });
     $('#exercise').value = d.exercise || '';
     $('#note').value = d.note || '';
@@ -811,12 +949,20 @@ function onSubmit(e) {
 }
 
 function initLogger() {
-    $('#workout-date').value = isoDate();
+    const dateInput = $('#workout-date');
+    dateInput.after(h('button', { type: 'button', id: 'date-today-btn', class: 'text-btn small hidden', style: 'margin-top:6px', onClick: () => {
+        setLogDate(isoDate(), false);
+        updateLastBox(); refreshPlaceholders(); renderDayLog(); saveDraft();
+    } }, 'Vissza a mai napra'));
+    setLogDate(isoDate(), false);
     $('#workout-form').addEventListener('submit', onSubmit);
     $('#workout-form').addEventListener('input', () => saveDraft());
-    $('#workout-date').addEventListener('change', () => { updateLastBox(); refreshPlaceholders(); renderDayLog(); });
+    $('#workout-date').addEventListener('change', () => {
+        setLogDate($('#workout-date').value || isoDate(), true);
+        updateLastBox(); refreshPlaceholders(); renderDayLog(); saveDraft();
+    });
     $('#add-set-btn').addEventListener('click', () => addSetRow({}, true));
-    $('#remove-set-btn').addEventListener('click', () => { const rows = setRows(); if (rows.length > 1) { rows[rows.length - 1].remove(); renumber(); saveDraft(); } });
+    $('#remove-set-btn').addEventListener('click', removeSelectedSets);
     $('#load-last-btn').addEventListener('click', loadLast);
     $('#quick-edit-btn').addEventListener('click', () => { quickEdit = !quickEdit; renderQuickExercises(); });
     $('#exercise').addEventListener('input', () => {
@@ -897,6 +1043,7 @@ async function startTemplate(i) {
         const ok = await confirmDialog('Már fut egy edzés. Ha újat indítasz, a jelenlegi lezárul összefoglaló nélkül.', { title: 'Új edzés indítása?', ok: 'Újat indítok' });
         if (!ok) return;
     }
+    syncLogDate();
     session = { name: t.name, exercises: t.exercises.map(normEx), index: 0, done: [], startedAt: Date.now(), savedIds: [], prs: [] };
     persistSession();
     goToSessionExercise(0);
@@ -1129,7 +1276,7 @@ function renderDaySheet(iso) {
     }
     if (iso <= isoDate()) {
         foot.append(h('button', { type: 'button', class: 'btn primary grow', html: `${icon('plus')}<span>Rögzítés erre a napra</span>`, onClick: () => {
-            $('#workout-date').value = iso;
+            setLogDate(iso, true);
             closeAllSheets(); switchTab('workout');
             updateLastBox(); refreshPlaceholders(); renderDayLog(); saveDraft();
             $('#workout-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1650,8 +1797,10 @@ function init() {
         if (e.key === 'Escape' && openSheets.size) closeSheet([...openSheets].pop());
     });
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') { updateWakeLock(); renderTop(); renderWeek(); renderTimers(); }
+        if (document.visibilityState === 'visible') { syncLogDate(); updateWakeLock(); renderTop(); renderWeek(); renderTimers(); }
     });
+    window.addEventListener('pageshow', syncLogDate);
+    setInterval(() => { syncLogDate(); renderTop(); }, 60000);
 
     renderTop(); renderWeek();
     renderSession();
